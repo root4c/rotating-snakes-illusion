@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rotating Snakes Experiment</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="progress-container" class="progress-container hidden">
+      <div id="progress-text">0 / 0</div>
+      <div id="progress-bar-bg"><div id="progress-bar-fill"></div></div>
+    </div>
+    <section id="screen-start" class="screen active">
+      <div class="card wide">
+        <h1>착시 설문</h1>
+        <p class="muted">노트북·데스크톱 권장</p>
+
+        <div id="device-warning" class="warning hidden"></div>
+
+        <div class="block">
+          <h2>진행 전 확인</h2>
+          <label class="check-row"><input type="checkbox" id="agree-pc"> 현재 노트북 또는 데스크톱에서 보고 있습니다.</label>
+          <label class="check-row"><input type="checkbox" id="agree-fullscreen"> 가능하면 전체화면으로 진행하겠습니다.</label>
+          <label class="check-row"><input type="checkbox" id="agree-ready"> 안내를 읽고 진행 방법을 이해했습니다.</label>
+        </div>
+
+        
+        <div class="block">
+          <h2>이 실험은 무엇인가요?</h2>
+          <div class="notice-box">
+            <p>이 실험은 <strong>정지된 원형 그림이 얼마나 움직이는 것처럼 느껴지는지</strong>를 조사하는 시각 인지 설문입니다.</p>
+            <p>여러 이미지를 보고, 각 이미지가 얼마나 움직이는 것처럼 느껴졌는지 <strong>1점부터 7점까지</strong> 선택하면 됩니다.</p>
+            <p>A와 C 문항은 그림 자체가 조금씩 다릅니다. B 문항은 그림은 같지만 <strong>빨간 점을 보는 방식</strong>이 달라집니다.</p>
+            <p>정답은 없으며, 오래 분석하기보다 실제로 느껴진 정도를 그대로 선택하면 됩니다.</p>
+            <p>실험은 보통 <strong>5~7분</strong> 정도 걸리며, <strong>노트북 또는 데스크톱</strong>에서 진행하는 것을 권장합니다.</p>
+            <p>(1점 = 전혀 움직이지 않음, 7점 = 매우 강하게 느껴짐)</p>
+          </div>
+        </div>
+
+
+        <div class="block" id="intro-image-block">
+          <h2>예시 이미지</h2>
+          <img id="intro-image" alt="안내 이미지" class="intro-image hidden">
+          <p id="intro-image-missing" class="muted">stimuli/intro_example.png 파일이 있으면 여기에 표시됩니다.</p>
+        </div>
+
+        <div class="actions">
+          <button id="btn-fullscreen" class="secondary">전체화면</button>
+          <button id="btn-demo" class="secondary">미리보기</button>
+          <button id="btn-start">시작</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-demo" class="screen">
+      <div class="card wide">
+        <h1>미리보기</h1>
+        <p class="muted">실제 설문 전, 문항이 어떤 식으로 보이는지 확인하는 화면입니다.</p>
+        <div class="block">
+          <label for="demo-mode-select">미리보기 조건</label>
+          <select id="demo-mode-select" class="select-box">
+            <option value="ac">A/C 문항 예시</option>
+            <option value="center">B 중앙 점 고정</option>
+            <option value="horizontal">B 좌우 점 이동</option>
+            <option value="circular">B 원형 점 이동</option>
+          </select>
+        </div>
+        <div class="phase-wrap demo-wrap">
+          <div id="demo-message" class="phase-message"></div>
+          <div id="demo-stage" class="stage">
+            <img id="demo-image" alt="demo stimulus">
+            <div id="demo-red-dot" class="red-dot hidden"></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btn-demo-play">재생</button>
+          <button id="btn-demo-stop" class="secondary">정지</button>
+          <button id="btn-demo-close" class="secondary">닫기</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-phase" class="screen">
+      <div class="phase-wrap">
+        <div id="phase-message" class="phase-message"></div>
+        <div id="stimulus-stage" class="stage">
+          <img id="stimulus-image" alt="stimulus">
+          <div id="red-dot" class="red-dot hidden"></div>
+        </div>
+        <div class="actions centered-actions">
+          <button id="btn-go-rating">평가하기</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-rating" class="screen">
+      <div class="card">
+        <div class="trial-meta">
+          <span id="trial-counter"></span>
+        </div>
+        <h2>이 이미지는 얼마나 움직이는 것처럼 느껴졌나요?</h2>
+        <div id="rating-buttons" class="rating-buttons"></div>
+        <p class="scale-caption">1 = 전혀 느껴지지 않음 · 7 = 매우 강하게 느껴짐</p>
+      </div>
+    </section>
+
+    <section id="screen-finish" class="screen">
+      <div class="card">
+        <h1>완료</h1>
+        <p>로컬 실행 상태에서는 응답 파일이 자동으로 다운로드됩니다.</p>
+        <p id="save-status" class="muted"></p>
+        <div class="actions">
+          <button id="btn-download-json" class="secondary">JSON 다시 저장</button>
+          <button id="btn-download-csv" class="secondary">CSV 다시 저장</button>
+          <button id="btn-restart">처음으로</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
