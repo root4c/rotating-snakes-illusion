@@ -18,7 +18,7 @@ window.EXPERIMENT_CONFIG = {
     speedCyclesPerSecond: 0.16
   },
   saving: {
-    autoPostEndpoint: "https://rotating-snakes-illusion.pages.dev/",
+    autoPostEndpoint: "https://rotating-snakes-submit.root4c.workers.dev/",
     endpointMethod: "POST"
   },
   demo: {
