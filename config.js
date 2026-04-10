@@ -15,7 +15,7 @@ window.EXPERIMENT_CONFIG = {
     sizePx: 14,
     horizontalAmplitudeRatio: 0.20,
     circularRadiusRatio: 0.16,
-    speedCyclesPerSecond: 0.16
+    speedCyclesPerSecond: 0.35
   },
   saving: {
     autoPostEndpoint: "https://rotating-snakes-submit.root4c.workers.dev/",
