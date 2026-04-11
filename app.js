@@ -7,99 +7,76 @@
 
   const screens = {
     start: document.getElementById('screen-start'),
-    demo: document.getElementById('screen-demo'),
-    phase: document.getElementById('screen-phase'),
+    trial: document.getElementById('screen-trial'),
     rating: document.getElementById('screen-rating'),
     finish: document.getElementById('screen-finish')
   };
+
   const warningEl = document.getElementById('device-warning');
-  const progressContainer = document.getElementById('progress-container');
-  const progressText = document.getElementById('progress-text');
-  const progressFill = document.getElementById('progress-bar-fill');
+  const introText = document.getElementById('intro-text');
   const introImage = document.getElementById('intro-image');
   const introImageMissing = document.getElementById('intro-image-missing');
-  const agreePc = document.getElementById('agree-pc');
-  const agreeFullscreen = document.getElementById('agree-fullscreen');
+  const agreeDevice = document.getElementById('agree-device');
   const agreeReady = document.getElementById('agree-ready');
-  const btnStart = document.getElementById('btn-start');
-  const btnDemo = document.getElementById('btn-demo');
   const btnFullscreen = document.getElementById('btn-fullscreen');
-  const phaseMessage = document.getElementById('phase-message');
-  const stage = document.getElementById('stimulus-stage');
+  const btnStart = document.getElementById('btn-start');
+  const trialMessage = document.getElementById('trial-message');
   const stimulusImage = document.getElementById('stimulus-image');
-  const redDot = document.getElementById('red-dot');
   const btnGoRating = document.getElementById('btn-go-rating');
   const trialCounter = document.getElementById('trial-counter');
   const ratingButtons = document.getElementById('rating-buttons');
+  const saveStatus = document.getElementById('save-status');
   const btnDownloadJson = document.getElementById('btn-download-json');
   const btnDownloadCsv = document.getElementById('btn-download-csv');
   const btnRestart = document.getElementById('btn-restart');
-  const saveStatus = document.getElementById('save-status');
+  const progressContainer = document.getElementById('progress-container');
+  const progressText = document.getElementById('progress-text');
+  const progressFill = document.getElementById('progress-bar-fill');
 
-  const demoModeSelect = document.getElementById('demo-mode-select');
-  const demoMessage = document.getElementById('demo-message');
-  const demoStage = document.getElementById('demo-stage');
-  const demoImage = document.getElementById('demo-image');
-  const demoRedDot = document.getElementById('demo-red-dot');
-  const btnDemoPlay = document.getElementById('btn-demo-play');
-  const btnDemoStop = document.getElementById('btn-demo-stop');
-  const btnDemoClose = document.getElementById('btn-demo-close');
-
+  let participantId = createParticipantId();
+  let assignment = null;
   let trialOrder = [];
   let trialIndex = -1;
   let currentTrial = null;
-  let ratingStartTs = 0;
-  let trialStimStartTs = 0;
   let results = [];
-  let participantId = createParticipantId();
   let startedAt = null;
-  let stageStartTs = 0;
-  let currentMinViewMs = 0;
-  let stageAdvanceArmed = false;
-  let stageAnimationFrame = null;
-  let demoAnimationFrame = null;
+  let currentShownAt = 0;
 
   buildRatingButtons();
-  setupIntroImage();
+  renderIntro();
+  loadIntroImage();
   updateDesktopGate();
-  setProgressVisible(false);
 
   window.addEventListener('resize', updateDesktopGate);
   window.addEventListener('orientationchange', updateDesktopGate);
 
   btnFullscreen.addEventListener('click', async () => {
-    try { await document.documentElement.requestFullscreen(); } catch (e) { console.warn(e); }
-  });
-
-  btnDemo.addEventListener('click', openDemo);
-  btnDemoPlay.addEventListener('click', playDemo);
-  btnDemoStop.addEventListener('click', stopDemo);
-  btnDemoClose.addEventListener('click', () => {
-    stopDemo();
-    setProgressVisible(false);
-    showScreen('start');
+    try { await document.documentElement.requestFullscreen(); } catch (err) { console.warn(err); }
   });
 
   btnStart.addEventListener('click', async () => {
-    if (cfg.requireDesktop && !isDesktopLike()) {
-      alert('모바일/태블릿에서는 시작할 수 없습니다. 노트북 또는 데스크톱에서 다시 접속하세요.');
-      updateDesktopGate();
-      return;
+    if (!validateStart()) return;
+    startedAt = new Date().toISOString();
+    participantId = createParticipantId();
+    results = [];
+    btnStart.disabled = true;
+
+    try {
+      assignment = await getAssignment();
+      trialOrder = buildTrialOrderFromAssignment(assignment);
+      setProgressVisible(true);
+      updateProgress(0, trialOrder.length);
+      nextTrial();
+    } catch (err) {
+      console.error(err);
+      btnStart.disabled = false;
+      alert('설문 배정을 불러오지 못했습니다. config.js 경로와 Worker 설정을 확인하세요.');
     }
-    if (!agreeReady.checked) {
-      alert('안내를 읽고 진행 방법을 이해했다는 항목을 확인하세요.');
-      return;
-    }
-    if (agreeFullscreen.checked && !document.fullscreenElement) {
-      try { await document.documentElement.requestFullscreen(); } catch (e) {}
-    }
-    startExperiment();
   });
 
   btnGoRating.addEventListener('click', () => {
-    if (!stageAdvanceArmed) return;
-    stopStageAnimation();
-    redDot.classList.add('hidden');
+    const elapsed = Date.now() - currentShownAt;
+    if (elapsed < cfg.ui.minViewMs) return;
     showRating();
   });
 
@@ -107,7 +84,16 @@
   btnDownloadCsv.addEventListener('click', downloadCsv);
   btnRestart.addEventListener('click', () => window.location.reload());
 
-  function setupIntroImage() {
+  function renderIntro() {
+    const lines = cfg.ui.introText || [];
+    introText.innerHTML = '<ul>' + lines.map(line => `<li>${escapeHtml(line)}</li>`).join('') + '</ul>';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+  }
+
+  function loadIntroImage() {
     if (!cfg.introImage) return;
     introImage.src = cfg.introImage;
     introImage.onload = () => {
@@ -118,16 +104,6 @@
       introImage.classList.add('hidden');
       introImageMissing.classList.remove('hidden');
     };
-  }
-
-  function setProgressVisible(visible) {
-    progressContainer.classList.toggle('hidden', !visible);
-  }
-
-  function updateProgress(current, total) {
-    progressText.textContent = `${current} / ${total}`;
-    const pct = total > 0 ? (current / total) * 100 : 0;
-    progressFill.style.width = `${pct}%`;
   }
 
   function buildRatingButtons() {
@@ -141,319 +117,239 @@
     }
   }
 
+  function isProbablyMobile() {
+    const ua = navigator.userAgent || '';
+    const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const smallTouchScreen = window.innerWidth < (cfg.desktopMinWidth || 900) && (navigator.maxTouchPoints || 0) > 0;
+    return mobileUA || smallTouchScreen;
+  }
+
   function updateDesktopGate() {
     if (!cfg.requireDesktop) {
       warningEl.classList.add('hidden');
+      agreeDevice.checked = true;
+      agreeDevice.disabled = true;
       btnStart.disabled = false;
-      agreePc.checked = true;
-      agreePc.disabled = true;
       return;
     }
-
-    const desktop = isDesktopLike();
-    agreePc.checked = desktop;
-    agreePc.disabled = true;
-    btnStart.disabled = !desktop;
-    btnDemo.disabled = !desktop;
-    btnFullscreen.disabled = !desktop;
-
-    if (desktop) {
-      warningEl.classList.add('hidden');
-    } else {
-      warningEl.textContent = '이 실험은 모바일/태블릿에서 시작할 수 없습니다. 노트북 또는 데스크톱에서 접속하세요.';
+    const blocked = isProbablyMobile();
+    if (blocked) {
+      warningEl.textContent = '이 설문은 모바일에서 시작할 수 없습니다. 노트북 또는 데스크톱에서 접속하세요.';
       warningEl.classList.remove('hidden');
+      btnStart.disabled = true;
+      agreeDevice.checked = false;
+      agreeDevice.disabled = true;
+    } else {
+      warningEl.classList.add('hidden');
+      agreeDevice.checked = true;
+      agreeDevice.disabled = true;
+      btnStart.disabled = false;
     }
   }
 
-  function isDesktopLike() {
-    const ua = navigator.userAgent || '';
-    const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-    const coarse = window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false;
-    const smallViewport = Math.min(window.innerWidth, window.innerHeight) < 700;
-    const touchOnly = (navigator.maxTouchPoints || 0) > 0 && coarse && smallViewport;
-    return !mobile && !touchOnly;
-  }
-
-  function openDemo() {
-    if (cfg.requireDesktop && !isDesktopLike()) return;
-    setProgressVisible(false);
-    showScreen('demo');
-    demoImage.src = cfg.demo.defaultImage;
-    demoMessage.textContent = '미리보기 조건을 고르고 재생을 누르세요.';
-  }
-
-  function playDemo() {
-    stopDemo();
-    const mode = demoModeSelect.value;
-    demoImage.src = cfg.demo.defaultImage;
-    demoMessage.textContent = mode === 'ac' ? 'A/C 문항 예시: 자유롭게 본 뒤 평가합니다.' : getBInstruction(mode);
-    if (mode === 'ac') {
-      demoRedDot.classList.add('hidden');
-      return;
+  function validateStart() {
+    if (cfg.requireDesktop && isProbablyMobile()) {
+      alert('모바일에서는 시작할 수 없습니다.');
+      return false;
     }
-    demoRedDot.classList.remove('hidden');
-    const start = performance.now();
-    const tick = now => {
-      updateDot(mode, now - start, demoStage.getBoundingClientRect(), demoRedDot);
-      demoAnimationFrame = requestAnimationFrame(tick);
+    if (!agreeReady.checked) {
+      alert('안내를 읽고 응답 방식을 이해했다는 항목을 확인하세요.');
+      return false;
+    }
+    return true;
+  }
+
+  async function getAssignment() {
+    if (cfg.assignment.mode === 'local_only') {
+      return buildLocalAssignment();
+    }
+
+    if (cfg.assignment.mode === 'remote_first') {
+      try {
+        const params = new URLSearchParams({ participant_id: participantId });
+        const res = await fetch(`${cfg.assignment.endpoint}?${params.toString()}`, { method: 'GET' });
+        if (!res.ok) throw new Error(`assign failed: ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.warn('Remote assignment failed, falling back to local sets.', err);
+        return buildLocalAssignment();
+      }
+    }
+
+    return buildLocalAssignment();
+  }
+
+  function buildLocalAssignment() {
+    const groupIndex = hashString(participantId) % cfg.stimuli.groups.length;
+    return {
+      participant_id: participantId,
+      mode: 'local-fallback',
+      group_index: groupIndex,
+      anchor_id: cfg.anchorTrial.id,
+      anchor_file: cfg.anchorTrial.file,
+      stimuli: cfg.stimuli.groups[groupIndex].map(id => ({ id, file: cfg.stimuli.buildStimulusPath(id) }))
     };
-    demoAnimationFrame = requestAnimationFrame(tick);
   }
 
-  function stopDemo() {
-    cancelAnimationFrame(demoAnimationFrame);
-    demoAnimationFrame = null;
-    demoRedDot.classList.add('hidden');
-  }
-
-  function startExperiment() {
-    participantId = createParticipantId();
-    startedAt = new Date().toISOString();
-    results = [];
-    setProgressVisible(true);
-    updateProgress(0, cfg.trials.length);
-    trialOrder = buildTrialOrder(cfg.trials.slice());
-    trialIndex = -1;
-    nextTrial();
+  function buildTrialOrderFromAssignment(assign) {
+    const anchor = {
+      id: assign.anchor_id || cfg.anchorTrial.id,
+      file: assign.anchor_file || cfg.anchorTrial.file,
+      kind: 'anchor'
+    };
+    const body = (assign.stimuli || []).map(s => ({
+      id: s.id,
+      file: s.file || cfg.stimuli.buildStimulusPath(s.id),
+      kind: 'stimulus'
+    }));
+    return [anchor, ...shuffle(body)];
   }
 
   function nextTrial() {
     trialIndex += 1;
-    stopStageAnimation();
-    redDot.classList.add('hidden');
     if (trialIndex >= trialOrder.length) {
       finishExperiment();
       return;
     }
     currentTrial = trialOrder[trialIndex];
-    updateProgress(trialIndex + 1, trialOrder.length);
-    runTrial(currentTrial);
+    showTrial();
   }
 
-  async function runTrial(trial) {
-    showScreen('phase');
-    phaseMessage.textContent = trial.kind === 'b' ? getBInstruction(trial.dotMode) : '이미지를 자연스럽게 충분히 본 뒤 평가하기를 누르세요.';
-    await setImage(trial.file);
-    await wait(cfg.timings.preMessageMs);
-    trialStimStartTs = performance.now();
-    stageStartTs = performance.now();
-    currentMinViewMs = trial.kind === 'b' ? cfg.timings.minViewMsB : cfg.timings.minViewMsAC;
-    stageAdvanceArmed = false;
+  function showTrial() {
+    const total = trialOrder.length;
+    updateProgress(trialIndex, total);
+    trialCounter.textContent = `${trialIndex + 1} / ${total}`;
+    trialMessage.textContent = currentTrial.kind === 'anchor'
+      ? '기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요.'
+      : '이미지를 보고 실제로 느껴진 정도를 응답하세요.';
     btnGoRating.disabled = true;
-    btnGoRating.textContent = '평가하기';
-
-    if (trial.kind === 'b') {
-      startStageAnimation(trial.dotMode || 'free');
-    } else {
-      redDot.classList.add('hidden');
-    }
-
-    armAdvanceButtonLater();
-  }
-
-  function armAdvanceButtonLater() {
-    const loop = () => {
-      const elapsed = performance.now() - stageStartTs;
-      if (elapsed >= currentMinViewMs) {
-        stageAdvanceArmed = true;
-        btnGoRating.disabled = false;
-        btnGoRating.textContent = '평가하기';
-        return;
-      }
-      const remain = Math.max(0, Math.ceil((currentMinViewMs - elapsed) / 1000));
-      btnGoRating.textContent = `평가하기 (${remain})`;
-      stageAnimationFrame = requestAnimationFrame(loop);
+    stimulusImage.src = currentTrial.file;
+    stimulusImage.onload = () => {
+      currentShownAt = Date.now();
+      setTimeout(() => { btnGoRating.disabled = false; }, cfg.ui.minViewMs);
     };
-    stageAnimationFrame = requestAnimationFrame(loop);
-  }
-
-  function startStageAnimation(mode) {
-    if (mode === 'free') {
-      redDot.classList.add('hidden');
-      return;
-    }
-    redDot.classList.remove('hidden');
-    const start = performance.now();
-    const tick = now => {
-      updateDot(mode, now - start, stage.getBoundingClientRect(), redDot);
-      stageAnimationFrame = requestAnimationFrame(tick);
+    stimulusImage.onerror = () => {
+      trialMessage.textContent = `이미지를 불러오지 못했습니다: ${currentTrial.file}`;
+      btnGoRating.disabled = false;
     };
-    stageAnimationFrame = requestAnimationFrame(tick);
-  }
-
-  function stopStageAnimation() {
-    cancelAnimationFrame(stageAnimationFrame);
-    stageAnimationFrame = null;
+    showScreen('trial');
   }
 
   function showRating() {
     showScreen('rating');
-    trialCounter.textContent = `${trialIndex + 1} / ${trialOrder.length} · ${currentTrial.factor}-${currentTrial.level}`;
-    ratingStartTs = performance.now();
   }
 
   function submitRating(score) {
-    const ratingRt = Math.round(performance.now() - ratingStartTs);
-    const viewDuration = Math.round(performance.now() - trialStimStartTs);
+    const endedAt = new Date().toISOString();
     results.push({
-      participant_id: participantId,
-      experiment_started_at: startedAt,
-      timestamp: new Date().toISOString(),
-      order_index: trialIndex + 1,
+      participant_id: assignment?.participant_id || participantId,
+      group_index: assignment?.group_index ?? null,
+      trial_index: trialIndex + 1,
       trial_id: currentTrial.id,
-      factor: currentTrial.factor,
-      level: currentTrial.level,
-      kind: currentTrial.kind,
-      file: currentTrial.file,
-      dot_mode: currentTrial.dotMode || '',
+      trial_kind: currentTrial.kind,
       score,
-      rating_response_time_ms: ratingRt,
-      viewing_duration_ms: viewDuration,
-      user_agent: navigator.userAgent,
-      viewport_w: window.innerWidth,
-      viewport_h: window.innerHeight,
-      fullscreen: !!document.fullscreenElement,
-      screen_w: window.screen.width,
-      screen_h: window.screen.height,
-      pixel_ratio: window.devicePixelRatio || 1
+      shown_at: new Date(currentShownAt).toISOString(),
+      answered_at: endedAt,
+      response_ms: Date.now() - currentShownAt
     });
+    updateProgress(trialIndex + 1, trialOrder.length);
     nextTrial();
   }
 
-  function updateDot(mode, elapsedMs, rect, targetDot) {
-    const t = elapsedMs / 1000;
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    const ampX = rect.width * cfg.bDot.horizontalAmplitudeRatio;
-    const radius = Math.min(rect.width, rect.height) * cfg.bDot.circularRadiusRatio;
-    const omega = 2 * Math.PI * cfg.bDot.speedCyclesPerSecond;
-
-    let x = cx;
-    let y = cy;
-
-    if (mode === 'center') {
-      x = cx;
-      y = cy;
-    } else if (mode === 'horizontal') {
-      x = cx + ampX * Math.sin(omega * t);
-      y = cy;
-    } else if (mode === 'circular') {
-      x = cx + radius * Math.cos(omega * t);
-      y = cy + radius * Math.sin(omega * t);
-    }
-
-    targetDot.style.left = `${x}px`;
-    targetDot.style.top = `${y}px`;
-  }
-
-  function getBInstruction(mode) {
-    if (mode === 'center') return '빨간 점을 가능한 한 중앙에서 유지하며 충분히 본 뒤 평가하세요.';
-    if (mode === 'horizontal') return '빨간 점의 좌우 움직임을 따라가며 충분히 본 뒤 평가하세요.';
-    if (mode === 'circular') return '빨간 점의 원형 움직임을 따라가며 충분히 본 뒤 평가하세요.';
-    return '이미지를 자연스럽게 충분히 본 뒤 평가하세요.';
-  }
-
-  function buildTrialOrder(trials) {
-    const maxSameFactorInRow = cfg.randomization.maxSameFactorInRow || 2;
-    const maxBInRow = cfg.randomization.maxBInRow || 1;
-
-    for (let attempt = 0; attempt < 5000; attempt++) {
-      const arr = shuffle(trials.slice());
-      let ok = true;
-      for (let i = 0; i < arr.length; i++) {
-        if (i >= maxSameFactorInRow) {
-          let sameFactor = true;
-          for (let j = 1; j <= maxSameFactorInRow; j++) {
-            if (arr[i - j].factor !== arr[i].factor) {
-              sameFactor = false;
-              break;
-            }
-          }
-          if (sameFactor) { ok = false; break; }
-        }
-        if (arr[i].factor === 'B' && i >= maxBInRow) {
-          let sameB = true;
-          for (let j = 1; j <= maxBInRow; j++) {
-            if (arr[i - j].factor !== 'B') {
-              sameB = false;
-              break;
-            }
-          }
-          if (sameB) { ok = false; break; }
-        }
-      }
-      if (ok) return arr;
-    }
-    return shuffle(trials.slice());
-  }
-
-  async function setImage(src) {
-    return new Promise((resolve, reject) => {
-      stimulusImage.onload = () => resolve();
-      stimulusImage.onerror = () => reject(new Error(`이미지 로드 실패: ${src}`));
-      stimulusImage.src = src;
-    }).catch(err => {
-      alert(err.message);
-      throw err;
-    });
-  }
-
-  function finishExperiment() {
-    updateProgress(trialOrder.length, trialOrder.length);
-    setProgressVisible(false);
-    showScreen('finish');
-    downloadJson();
-    downloadCsv();
-    maybePostResults();
-  }
-
-  async function maybePostResults() {
-    if (!cfg.saving.autoPostEndpoint) {
-      saveStatus.textContent = '현재는 로컬 저장 모드입니다. 온라인 저장을 쓰려면 config.js의 autoPostEndpoint를 설정하세요.';
-      return;
-    }
-    try {
-      const payload = {
-        participant_id: participantId,
-        experiment_started_at: startedAt,
-        submitted_at: new Date().toISOString(),
-        results
-      };
-      const res = await fetch(cfg.saving.autoPostEndpoint, {
-        method: cfg.saving.endpointMethod || 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      saveStatus.textContent = '응답이 서버에도 저장되었습니다.';
-    } catch (err) {
-      console.error(err);
-      saveStatus.textContent = '서버 저장은 실패했고, 로컬 파일 다운로드는 완료되었습니다.';
-    }
-  }
-
-  function downloadJson() {
+  async function finishExperiment() {
     const payload = {
-      participant_id: participantId,
-      experiment_started_at: startedAt,
-      downloaded_at: new Date().toISOString(),
+      participant_id: assignment?.participant_id || participantId,
+      assignment_mode: assignment?.mode || 'unknown',
+      group_index: assignment?.group_index ?? null,
+      anchor_id: assignment?.anchor_id || cfg.anchorTrial.id,
+      started_at: startedAt,
+      submitted_at: new Date().toISOString(),
+      user_agent: navigator.userAgent,
       results
     };
-    saveBlob(`${participantId}_responses.json`, JSON.stringify(payload, null, 2), 'application/json');
-  }
 
-  function downloadCsv() {
-    if (!results.length) return;
-    const keys = Object.keys(results[0]);
-    const lines = [keys.join(',')];
-    for (const row of results) {
-      lines.push(keys.map(k => csvEscape(row[k])).join(','));
+    let posted = false;
+    if (cfg.saving.autoPostEndpoint) {
+      try {
+        const res = await fetch(cfg.saving.autoPostEndpoint, {
+          method: cfg.saving.endpointMethod || 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          saveStatus.textContent = data.message || '서버에 저장되었습니다.';
+          posted = true;
+        } else {
+          saveStatus.textContent = `서버 저장 실패: ${res.status}`;
+        }
+      } catch (err) {
+        console.warn(err);
+        saveStatus.textContent = '온라인 저장에 실패하여 로컬 저장 파일을 제공합니다.';
+      }
     }
-    saveBlob(`${participantId}_responses.csv`, lines.join('\n'), 'text/csv;charset=utf-8');
+
+    if (!posted) {
+      downloadJson(payload);
+      downloadCsv(payload);
+    }
+    showScreen('finish');
   }
 
-  function saveBlob(filename, content, type) {
-    const blob = new Blob([content], { type });
+  function downloadJson(payload) {
+    const data = payload || buildDownloadPayload();
+    downloadBlob(
+      new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' }),
+      `rotating-snakes-${participantId}.json`
+    );
+  }
+
+  function downloadCsv(payload) {
+    const data = payload || buildDownloadPayload();
+    const header = [
+      'participant_id', 'group_index', 'trial_index', 'trial_id', 'trial_kind',
+      'score', 'shown_at', 'answered_at', 'response_ms'
+    ];
+    const rows = [header.join(',')];
+    for (const row of data.results) {
+      rows.push([
+        csvEscape(row.participant_id),
+        csvEscape(row.group_index),
+        csvEscape(row.trial_index),
+        csvEscape(row.trial_id),
+        csvEscape(row.trial_kind),
+        csvEscape(row.score),
+        csvEscape(row.shown_at),
+        csvEscape(row.answered_at),
+        csvEscape(row.response_ms)
+      ].join(','));
+    }
+    downloadBlob(
+      new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' }),
+      `rotating-snakes-${participantId}.csv`
+    );
+  }
+
+  function buildDownloadPayload() {
+    return {
+      participant_id: assignment?.participant_id || participantId,
+      assignment_mode: assignment?.mode || 'unknown',
+      group_index: assignment?.group_index ?? null,
+      anchor_id: assignment?.anchor_id || cfg.anchorTrial.id,
+      started_at: startedAt,
+      submitted_at: new Date().toISOString(),
+      user_agent: navigator.userAgent,
+      results
+    };
+  }
+
+  function csvEscape(v) {
+    const s = String(v ?? '');
+    if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+    return s;
+  }
+
+  function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -464,30 +360,42 @@
     URL.revokeObjectURL(url);
   }
 
-  function csvEscape(value) {
-    const s = String(value ?? '');
-    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-    return s;
-  }
-
   function showScreen(name) {
-    Object.values(screens).forEach(el => el.classList.remove('active'));
-    screens[name].classList.add('active');
+    Object.entries(screens).forEach(([key, el]) => {
+      el.classList.toggle('active', key === name);
+    });
   }
 
-  function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  function setProgressVisible(visible) {
+    progressContainer.classList.toggle('hidden', !visible);
+  }
+
+  function updateProgress(current, total) {
+    progressText.textContent = `${current} / ${total}`;
+    const pct = total > 0 ? (current / total) * 100 : 0;
+    progressFill.style.width = `${pct}%`;
   }
 
   function shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
+    const out = arr.slice();
+    for (let i = out.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+      [out[i], out[j]] = [out[j], out[i]];
     }
-    return arr;
+    return out;
+  }
+
+  function hashString(input) {
+    let h = 2166136261;
+    for (let i = 0; i < input.length; i++) {
+      h ^= input.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return Math.abs(h >>> 0);
   }
 
   function createParticipantId() {
-    return 'p_' + Math.random().toString(36).slice(2, 10);
+    const rand = crypto.getRandomValues(new Uint32Array(2));
+    return `p_${Date.now().toString(36)}_${rand[0].toString(36)}${rand[1].toString(36)}`;
   }
 })();
