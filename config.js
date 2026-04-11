@@ -36,7 +36,7 @@ window.EXPERIMENT_CONFIG = {
   },
   stimuli: {
     buildStimulusPath(id) {
-      return `stimuli/${id}.png`;
+      return `stimuli/${id}.jpg`;
     },
     allIds: Array.from({ length: 4 }, (_, ai) => ai + 1).flatMap(a =>
       Array.from({ length: 4 }, (_, bi) => bi + 1).flatMap(b =>
