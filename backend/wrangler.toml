@@ -1,7 +1,0 @@
-name = "rotating-snakes-submit"
-main = "cloudflare_submit_worker.js"
-compatibility_date = "2026-04-10"
-
-[[kv_namespaces]]
-binding = "RESULTS"
-id = "PASTE_YOUR_KV_NAMESPACE_ID"
