@@ -205,3 +205,6 @@ button:disabled {
   background: var(--accent);
   transition: width 0.2s ease;
 }
+
+
+.notice-box ul { margin: 0; padding-left: 20px; }
