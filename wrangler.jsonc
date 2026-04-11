@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rotating-snakes-submit",
+  "main": "worker.js",
+  "compatibility_date": "2026-04-11",
+  "kv_namespaces": [
+    {
+      "binding": "RESULTS",
+      "id": "REPLACE_WITH_RESULTS_KV_NAMESPACE_ID"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ASSIGNMENT_COORDINATOR",
+        "class_name": "AssignmentCoordinator"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["AssignmentCoordinator"]
+    }
+  ]
+}
