@@ -2,10 +2,10 @@ window.EXPERIMENT_CONFIG = {
   title: "Rotating Snakes Motion Survey",
   requireDesktop: true,
   desktopMinWidth: 900,
-  introImage: "stimuli/anchor.png",
+  introImage: "stimuli/anchor.jpg",
   anchorTrial: {
     id: "ANCHOR_01",
-    file: "stimuli/anchor.png",
+    file: "stimuli/anchor.jpg",
     prompt: "기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요."
   },
   assignment: {
