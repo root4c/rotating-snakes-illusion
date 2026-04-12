@@ -18,7 +18,7 @@ export default {
       const data = await response.json();
 
       const anchorId = 'ANCHOR_01';
-      const anchorFile = 'stimuli/anchor.png';
+      const anchorFile = 'stimuli/anchor.jpg';
       const stimuli = (GROUPS[data.group_index] || []).map((id) => ({
         id,
         file: `stimuli/${id}.jpg`
