@@ -25,7 +25,7 @@ export default {
         },
         {
           id: 'ANCHOR_HIGH',
-          file: 'stimuli/A4_B4_C1.jpg',
+          file: 'stimuli/A4_B1_C1.jpg',
           kind: 'anchor_high'
         }
       ];
