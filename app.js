@@ -59,6 +59,7 @@
     startedAt = new Date().toISOString();
     participantId = createParticipantId();
     results = [];
+    trialIndex = -1;
     btnStart.disabled = true;
 
     try {
@@ -90,7 +91,7 @@
   }
 
   function escapeHtml(s) {
-    return String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+    return String(s).replace(/[&<>\"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[ch]));
   }
 
   function loadIntroImage() {
@@ -185,24 +186,44 @@
       participant_id: participantId,
       mode: 'local-fallback',
       group_index: groupIndex,
-      anchor_id: cfg.anchorTrial.id,
-      anchor_file: cfg.anchorTrial.file,
-      stimuli: cfg.stimuli.groups[groupIndex].map(id => ({ id, file: cfg.stimuli.buildStimulusPath(id) }))
+      anchors: (cfg.anchorTrials || []).map(a => ({
+        id: a.id,
+        file: a.file,
+        kind: a.kind
+      })),
+      stimuli: cfg.stimuli.groups[groupIndex].map(id => ({
+        id,
+        file: cfg.stimuli.buildStimulusPath(id)
+      }))
     };
   }
 
   function buildTrialOrderFromAssignment(assign) {
-    const anchor = {
-      id: assign.anchor_id || cfg.anchorTrial.id,
-      file: assign.anchor_file || cfg.anchorTrial.file,
-      kind: 'anchor'
-    };
+    const anchors = (assign.anchors || cfg.anchorTrials || []).map(a => ({
+      id: a.id,
+      file: a.file,
+      kind: a.kind || 'anchor'
+    }));
+
     const body = (assign.stimuli || []).map(s => ({
       id: s.id,
       file: s.file || cfg.stimuli.buildStimulusPath(s.id),
       kind: 'stimulus'
     }));
-    return [anchor, ...shuffle(body)];
+
+    const shuffledBody = shuffle(body);
+
+    if (anchors.length === 2) {
+      const mid = Math.floor(shuffledBody.length / 2);
+      return [
+        anchors[0],
+        ...shuffledBody.slice(0, mid),
+        anchors[1],
+        ...shuffledBody.slice(mid)
+      ];
+    }
+
+    return [...anchors, ...shuffledBody];
   }
 
   function nextTrial() {
@@ -219,9 +240,15 @@
     const total = trialOrder.length;
     updateProgress(trialIndex, total);
     trialCounter.textContent = `${trialIndex + 1} / ${total}`;
-    trialMessage.textContent = currentTrial.kind === 'anchor'
-      ? '기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요.'
-      : '이미지를 보고 실제로 느껴진 정도를 응답하세요.';
+
+    if (currentTrial.kind === 'anchor_low') {
+      trialMessage.textContent = '약한 기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요.';
+    } else if (currentTrial.kind === 'anchor_high') {
+      trialMessage.textContent = '강한 기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요.';
+    } else {
+      trialMessage.textContent = '이미지를 보고 실제로 느껴진 정도를 응답하세요.';
+    }
+
     btnGoRating.disabled = true;
     stimulusImage.src = currentTrial.file;
     stimulusImage.onload = () => {
@@ -261,7 +288,7 @@
       participant_id: assignment?.participant_id || participantId,
       assignment_mode: assignment?.mode || 'unknown',
       group_index: assignment?.group_index ?? null,
-      anchor_id: assignment?.anchor_id || cfg.anchorTrial.id,
+      anchor_ids: (assignment?.anchors || cfg.anchorTrials || []).map(a => a.id),
       started_at: startedAt,
       submitted_at: new Date().toISOString(),
       user_agent: navigator.userAgent,
@@ -335,7 +362,7 @@
       participant_id: assignment?.participant_id || participantId,
       assignment_mode: assignment?.mode || 'unknown',
       group_index: assignment?.group_index ?? null,
-      anchor_id: assignment?.anchor_id || cfg.anchorTrial.id,
+      anchor_ids: (assignment?.anchors || cfg.anchorTrials || []).map(a => a.id),
       started_at: startedAt,
       submitted_at: new Date().toISOString(),
       user_agent: navigator.userAgent,
