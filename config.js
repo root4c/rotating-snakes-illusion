@@ -2,7 +2,7 @@ window.EXPERIMENT_CONFIG = {
   title: "Rotating Snakes Motion Survey",
   requireDesktop: true,
   desktopMinWidth: 900,
-  introImage: "stimuli/A4_B4_C1.jpg",
+  introImage: "stimuli/A4_B1_C1.jpg",
 
   anchorTrials: [
     {
