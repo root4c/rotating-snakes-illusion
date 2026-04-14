@@ -9,13 +9,13 @@ window.EXPERIMENT_CONFIG = {
       id: "ANCHOR_LOW",
       file: "stimuli/A1_B1_C4.jpg",
       kind: "anchor_low",
-      prompt: "약한 기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요."
+      prompt: "얼마나 움직이는 것처럼 느껴지는지 응답하세요."
     },
     {
       id: "ANCHOR_HIGH",
-      file: "stimuli/A4_B4_C1.jpg",
+      file: "stimuli/A4_B1_C1.jpg",
       kind: "anchor_high",
-      prompt: "강한 기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요."
+      prompt: "얼마나 움직이는 것처럼 느껴지는지 응답하세요."
     }
   ],
 
