@@ -242,9 +242,9 @@
     trialCounter.textContent = `${trialIndex + 1} / ${total}`;
 
     if (currentTrial.kind === 'anchor_low') {
-      trialMessage.textContent = '약한 기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요.';
+      trialMessage.textContent = '얼마나 움직이는 것처럼 느껴지는지 응답하세요.';
     } else if (currentTrial.kind === 'anchor_high') {
-      trialMessage.textContent = '강한 기준 이미지입니다. 얼마나 움직이는 것처럼 느껴지는지 응답하세요.';
+      trialMessage.textContent = '얼마나 움직이는 것처럼 느껴지는지 응답하세요.';
     } else {
       trialMessage.textContent = '이미지를 보고 실제로 느껴진 정도를 응답하세요.';
     }
