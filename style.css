@@ -191,9 +191,10 @@ button:disabled {
   box-shadow: 0 22px 56px rgba(0,0,0,0.45);
 }
 #stimulus-image, #demo-image {
-  width: 100%;
+  width: auto;
   height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  object-fit: contain;
   background: #e8ebf2;
 }
 #stimulus-image {
