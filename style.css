@@ -23,7 +23,7 @@ html, body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   min-height: 100%;
 }
-body { min-height: 100vh; }
+body { min-height: 100vh; overflow-x: hidden; }
 .hidden { display: none !important; }
 
 .screen {
@@ -143,31 +143,47 @@ button:disabled {
 }
 .phase-wrap {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  grid-template-rows: 1fr;
+  align-items: stretch;
+  gap: 14px;
+  padding: 10px;
 }
 .trial-screen {
-  padding: 8px 14px 18px;
-  align-items: flex-start;
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
 }
 .demo-wrap { gap: 18px; }
 .phase-message {
-  min-height: 26px;
-  margin-top: 54px;
-  font-size: 17px;
-  color: var(--muted);
-  text-align: center;
-  font-weight: 700;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  min-height: auto;
+  margin-top: 76px;
+  padding: 14px 12px;
+  font-size: 14px;
+  color: var(--text);
+  text-align: left;
+  font-weight: 800;
+  line-height: 1.45;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(23, 26, 33, 0.9);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.28);
 }
 .stage {
+  grid-column: 1;
+  grid-row: 1;
   position: relative;
-  width: min(96vw, calc(100vh - 150px), 1180px);
-  height: min(96vw, calc(100vh - 150px), 1180px);
-  max-height: calc(100vh - 150px);
+  width: 100%;
+  height: calc(100vh - 20px);
+  max-height: none;
   background: #e8ebf2;
-  border-radius: 20px;
+  border-radius: 22px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -189,10 +205,19 @@ button:disabled {
   opacity: 1;
   transform: scale(1);
 }
-.trial-actions { margin-top: 4px; }
+.trial-actions {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+  justify-self: stretch;
+  margin: 0;
+  padding-bottom: 12px;
+}
 #btn-go-rating {
-  min-width: 180px;
+  width: 100%;
+  min-width: 0;
   font-size: 17px;
+  padding: 16px 18px;
 }
 .red-dot {
   position: absolute;
@@ -229,15 +254,21 @@ button:disabled {
 
 .progress-container {
   position: fixed;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(760px, 86vw);
+  top: 14px;
+  right: 14px;
+  left: auto;
+  transform: none;
+  width: 220px;
   z-index: 1200;
-  text-align: center;
+  text-align: left;
   font-size: 14px;
   color: var(--text);
   pointer-events: none;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(23, 26, 33, 0.9);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.28);
 }
 #progress-text {
   margin-bottom: 6px;
@@ -247,8 +278,9 @@ button:disabled {
 #progress-hint {
   margin-top: 6px;
   color: rgba(238, 242, 255, 0.78);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
+  line-height: 1.35;
 }
 #progress-bar-bg {
   width: 100%;
@@ -297,14 +329,35 @@ button:disabled {
 }
 .result-actions { justify-content: center; }
 
+@media (max-width: 900px) {
+  .phase-wrap {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px;
+  }
+  .stage {
+    grid-column: 1;
+    grid-row: 1;
+    height: calc(100vh - 118px);
+  }
+  .phase-message {
+    display: none;
+  }
+  .trial-actions {
+    grid-column: 1;
+    grid-row: 2;
+    padding-bottom: 0;
+  }
+  .progress-container {
+    width: calc(100vw - 24px);
+    top: 8px;
+    right: 12px;
+  }
+}
+
 @media (max-width: 760px) {
   .screen { padding: 12px; }
   .card, .card.wide { padding: 18px; }
   .rating-buttons { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .stage {
-    width: 96vw;
-    height: 96vw;
-    max-height: calc(100vh - 170px);
-  }
-  .phase-message { margin-top: 58px; }
 }
