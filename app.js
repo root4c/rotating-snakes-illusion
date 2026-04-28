@@ -7,6 +7,7 @@
 
   const screens = {
     start: document.getElementById('screen-start'),
+    intro: document.getElementById('screen-intro'),
     trial: document.getElementById('screen-trial'),
     rating: document.getElementById('screen-rating'),
     finish: document.getElementById('screen-finish'),
@@ -21,6 +22,9 @@
   const agreeReady = document.getElementById('agree-ready');
   const btnFullscreen = document.getElementById('btn-fullscreen');
   const btnStart = document.getElementById('btn-start');
+  const introVideo = document.getElementById('intro-video');
+  const introVideoStatus = document.getElementById('intro-video-status');
+  const btnIntroConfirm = document.getElementById('btn-intro-confirm');
   const trialMessage = document.getElementById('trial-message');
   const stimulusImage = document.getElementById('stimulus-image');
   const btnGoRating = document.getElementById('btn-go-rating');
@@ -35,10 +39,27 @@
   const progressText = document.getElementById('progress-text');
   const progressFill = document.getElementById('progress-bar-fill');
   const progressHint = document.getElementById('progress-hint');
+
+  const resultStatus = document.getElementById('result-status');
+  const resultGrade = document.getElementById('result-grade');
   const resultScore = document.getElementById('result-score');
   const resultRank = document.getElementById('result-rank');
   const resultCaption = document.getElementById('result-caption');
   const resultMeterFill = document.getElementById('result-meter-fill');
+  const metricContrastText = document.getElementById('metric-contrast-text');
+  const metricColorText = document.getElementById('metric-color-text');
+  const metricStructureText = document.getElementById('metric-structure-text');
+  const metricContrastFill = document.getElementById('metric-contrast-fill');
+  const metricColorFill = document.getElementById('metric-color-fill');
+  const metricStructureFill = document.getElementById('metric-structure-fill');
+  const traitMain = document.getElementById('trait-main');
+  const traitSpeed = document.getElementById('trait-speed');
+  const traitStability = document.getElementById('trait-stability');
+  const traitFocus = document.getElementById('trait-focus');
+  const resultHistogram = document.getElementById('result-histogram');
+  const distributionLabel = document.getElementById('distribution-label');
+  const resultSummaryTitle = document.getElementById('result-summary-title');
+  const resultSummary = document.getElementById('result-summary');
 
   let participantId = createParticipantId();
   let assignment = null;
@@ -48,11 +69,13 @@
   let results = [];
   let startedAt = null;
   let currentShownAt = 0;
+  let introReady = false;
 
   buildRatingButtons();
   renderIntro();
   loadIntroImage();
   updateDesktopGate();
+  setupIntroVideoGate();
 
   window.addEventListener('resize', updateDesktopGate);
   window.addEventListener('orientationchange', updateDesktopGate);
@@ -61,25 +84,14 @@
     try { await document.documentElement.requestFullscreen(); } catch (err) { console.warn(err); }
   });
 
-  btnStart.addEventListener('click', async () => {
+  btnStart.addEventListener('click', () => {
     if (!validateStart()) return;
-    startedAt = new Date().toISOString();
-    participantId = createParticipantId();
-    results = [];
-    trialIndex = -1;
-    btnStart.disabled = true;
+    showIntroVideoScreen();
+  });
 
-    try {
-      assignment = await getAssignment();
-      trialOrder = buildTrialOrderFromAssignment(assignment);
-      setProgressVisible(true);
-      updateProgress(0, trialOrder.length);
-      nextTrial();
-    } catch (err) {
-      console.error(err);
-      btnStart.disabled = false;
-      alert('설문 배정을 불러오지 못했습니다. config.js 경로와 Worker 설정을 확인하세요.');
-    }
+  btnIntroConfirm?.addEventListener('click', () => {
+    if (!introReady) return;
+    beginExperiment();
   });
 
   btnGoRating.addEventListener('click', () => {
@@ -92,6 +104,61 @@
   btnDownloadCsv.addEventListener('click', downloadCsv);
   btnRestart.addEventListener('click', () => window.location.reload());
   btnRetry?.addEventListener('click', () => window.location.reload());
+
+  function setupIntroVideoGate() {
+    if (!introVideo || !btnIntroConfirm) return;
+    btnIntroConfirm.disabled = true;
+
+    introVideo.addEventListener('ended', unlockIntroConfirm);
+    introVideo.addEventListener('timeupdate', () => {
+      if (!introVideo.duration || Number.isNaN(introVideo.duration)) return;
+      const watchedRatio = introVideo.currentTime / introVideo.duration;
+      if (watchedRatio >= 0.85) unlockIntroConfirm();
+    });
+    introVideo.addEventListener('error', () => {
+      introVideoStatus.textContent = 'intro.mp4를 찾지 못했습니다. 안내 확인 후 바로 시작할 수 있습니다.';
+      unlockIntroConfirm();
+    });
+  }
+
+  function unlockIntroConfirm() {
+    introReady = true;
+    btnIntroConfirm.disabled = false;
+    if (introVideoStatus) introVideoStatus.textContent = '확인 완료. 이제 설문을 시작할 수 있습니다.';
+  }
+
+  function showIntroVideoScreen() {
+    introReady = false;
+    if (btnIntroConfirm) btnIntroConfirm.disabled = true;
+    if (introVideoStatus) introVideoStatus.textContent = '영상을 끝까지 보면 시작 버튼이 활성화됩니다.';
+    if (introVideo) {
+      introVideo.currentTime = 0;
+      introVideo.load();
+    }
+    showScreen('intro');
+  }
+
+  async function beginExperiment() {
+    startedAt = new Date().toISOString();
+    participantId = createParticipantId();
+    results = [];
+    trialIndex = -1;
+    btnStart.disabled = true;
+    btnIntroConfirm.disabled = true;
+
+    try {
+      assignment = await getAssignment();
+      trialOrder = buildTrialOrderFromAssignment(assignment);
+      setProgressVisible(true);
+      updateProgress(0, trialOrder.length);
+      nextTrial();
+    } catch (err) {
+      console.error(err);
+      btnStart.disabled = false;
+      btnIntroConfirm.disabled = false;
+      alert('설문 배정을 불러오지 못했습니다. config.js 경로와 Worker 설정을 확인하세요.');
+    }
+  }
 
   function renderIntro() {
     const lines = cfg.ui.introText || [];
@@ -341,14 +408,91 @@
     const filtered = results.filter(r => r.trial_kind === 'stimulus');
     const totalStimuli = Math.max(1, filtered.length);
     const avg = filtered.reduce((sum, row) => sum + Number(row.score || 0), 0) / totalStimuli;
-    const detected = Math.round((avg / cfg.rating.max) * totalStimuli);
     const sensitivity = Math.round((avg / cfg.rating.max) * 100);
+    const detected = Math.round((avg / cfg.rating.max) * totalStimuli);
     const percentile = Math.max(1, Math.min(99, 100 - Math.round(sensitivity * 0.82)));
 
-    resultScore.textContent = `${detected}개 감지했습니다`;
+    const contrast = clamp(Math.round(sensitivity + pseudoOffset('contrast', -9, 9)), 8, 99);
+    const color = clamp(Math.round(sensitivity + pseudoOffset('color', -14, 11)), 8, 99);
+    const structure = clamp(Math.round(sensitivity + pseudoOffset('structure', -11, 13)), 8, 99);
+    const stability = clamp(100 - responseDeviationScore(filtered), 12, 99);
+    const avgResponseMs = filtered.reduce((sum, row) => sum + Number(row.response_ms || 0), 0) / totalStimuli;
+    const speedScore = avgResponseMs < 2200 ? '빠름' : avgResponseMs < 4200 ? '보통' : '신중함';
+    const focusScore = clamp(Math.round((sensitivity * 0.62) + (stability * 0.38)), 1, 99);
+    const grade = getGrade(sensitivity);
+    const mainTrait = getMainTrait({ contrast, color, structure });
+
+    resultStatus.textContent = `총 ${totalStimuli}개 실험 이미지 응답 기준`;
+    resultGrade.textContent = grade;
+    resultScore.textContent = `${detected}개 감지`;
     resultRank.textContent = `착시 민감도 상위 ${percentile}%`;
-    resultCaption.textContent = '높게 응답한 이미지가 많을수록 움직임 착시에 민감하게 반응한 것으로 표시됩니다.';
+    resultCaption.textContent = '점수가 높을수록 정지 이미지에서 움직임을 더 강하게 감지한 것으로 표시됩니다.';
     resultMeterFill.style.width = `${Math.max(8, sensitivity)}%`;
+
+    setMetric(metricContrastText, metricContrastFill, contrast);
+    setMetric(metricColorText, metricColorFill, color);
+    setMetric(metricStructureText, metricStructureFill, structure);
+
+    traitMain.textContent = mainTrait;
+    traitSpeed.textContent = speedScore;
+    traitStability.textContent = `${stability}%`;
+    traitFocus.textContent = `${focusScore}%`;
+
+    distributionLabel.textContent = percentile <= 15 ? '상위권' : percentile <= 45 ? '평균 이상' : '평균권';
+    resultSummaryTitle.textContent = `${mainTrait} 반응형`;
+    resultSummary.textContent = '이 결과지는 실제 진단이 아니라 설문 몰입을 위한 간단한 시각 반응 리포트입니다. 그래도 응답 패턴을 기준으로 상대적 민감도와 반응 유형을 요약해 보여줍니다.';
+    drawHistogram(sensitivity);
+  }
+
+  function setMetric(textEl, fillEl, value) {
+    textEl.textContent = `${value}%`;
+    requestAnimationFrame(() => { fillEl.style.width = `${value}%`; });
+  }
+
+  function drawHistogram(sensitivity) {
+    resultHistogram.innerHTML = '';
+    const heights = [18, 26, 35, 48, 63, 78, 92, 100, 90, 76, 58, 42, 30, 22];
+    const userIndex = clamp(Math.round((sensitivity / 100) * (heights.length - 1)), 0, heights.length - 1);
+    heights.forEach((height, index) => {
+      const bar = document.createElement('div');
+      bar.className = index === userIndex ? 'histogram-bar user-bar' : 'histogram-bar';
+      bar.style.setProperty('--h', `${height}%`);
+      bar.style.animationDelay = `${index * 35}ms`;
+      resultHistogram.appendChild(bar);
+    });
+  }
+
+  function getGrade(score) {
+    if (score >= 88) return 'S';
+    if (score >= 75) return 'A';
+    if (score >= 62) return 'B+';
+    if (score >= 45) return 'B';
+    if (score >= 30) return 'C';
+    return 'D';
+  }
+
+  function getMainTrait(values) {
+    const entries = Object.entries(values).sort((a, b) => b[1] - a[1]);
+    if (entries[0][0] === 'contrast') return '명도 대비';
+    if (entries[0][0] === 'color') return '색 배열';
+    return '공간 구조';
+  }
+
+  function responseDeviationScore(rows) {
+    if (!rows.length) return 45;
+    const avg = rows.reduce((sum, row) => sum + Number(row.score || 0), 0) / rows.length;
+    const variance = rows.reduce((sum, row) => sum + Math.pow(Number(row.score || 0) - avg, 2), 0) / rows.length;
+    return clamp(Math.round(Math.sqrt(variance) * 18), 0, 88);
+  }
+
+  function pseudoOffset(key, min, max) {
+    const base = `${participantId}:${key}`;
+    const n = hashString(base) % 1000;
+    return min + (n / 999) * (max - min);
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
   }
 
   function downloadJson(payload) {
