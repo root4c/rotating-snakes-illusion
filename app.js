@@ -9,7 +9,8 @@
     start: document.getElementById('screen-start'),
     trial: document.getElementById('screen-trial'),
     rating: document.getElementById('screen-rating'),
-    finish: document.getElementById('screen-finish')
+    finish: document.getElementById('screen-finish'),
+    result: document.getElementById('screen-result')
   };
 
   const warningEl = document.getElementById('device-warning');
@@ -29,9 +30,15 @@
   const btnDownloadJson = document.getElementById('btn-download-json');
   const btnDownloadCsv = document.getElementById('btn-download-csv');
   const btnRestart = document.getElementById('btn-restart');
+  const btnRetry = document.getElementById('btn-retry');
   const progressContainer = document.getElementById('progress-container');
   const progressText = document.getElementById('progress-text');
   const progressFill = document.getElementById('progress-bar-fill');
+  const progressHint = document.getElementById('progress-hint');
+  const resultScore = document.getElementById('result-score');
+  const resultRank = document.getElementById('result-rank');
+  const resultCaption = document.getElementById('result-caption');
+  const resultMeterFill = document.getElementById('result-meter-fill');
 
   let participantId = createParticipantId();
   let assignment = null;
@@ -84,6 +91,7 @@
   btnDownloadJson.addEventListener('click', downloadJson);
   btnDownloadCsv.addEventListener('click', downloadCsv);
   btnRestart.addEventListener('click', () => window.location.reload());
+  btnRetry?.addEventListener('click', () => window.location.reload());
 
   function renderIntro() {
     const lines = cfg.ui.introText || [];
@@ -242,17 +250,19 @@
     trialCounter.textContent = `${trialIndex + 1} / ${total}`;
 
     if (currentTrial.kind === 'anchor_low') {
-      trialMessage.textContent = '얼마나 움직이는 것처럼 느껴지는지 응답하세요.';
+      trialMessage.textContent = '기준 이미지를 보고 빠르게 선택하세요.';
     } else if (currentTrial.kind === 'anchor_high') {
-      trialMessage.textContent = '얼마나 움직이는 것처럼 느껴지는지 응답하세요.';
+      trialMessage.textContent = '중간 체크포인트입니다. 거의 절반을 넘었습니다.';
     } else {
-      trialMessage.textContent = '이미지를 보고 실제로 느껴진 정도를 응답하세요.';
+      trialMessage.textContent = '움직이는 것처럼 보이는 정도를 첫 느낌으로 선택하세요.';
     }
 
     btnGoRating.disabled = true;
+    stimulusImage.classList.remove('loaded');
     stimulusImage.src = currentTrial.file;
     stimulusImage.onload = () => {
       currentShownAt = Date.now();
+      stimulusImage.classList.add('loaded');
       setTimeout(() => { btnGoRating.disabled = false; }, cfg.ui.minViewMs);
     };
     stimulusImage.onerror = () => {
@@ -319,8 +329,26 @@
     if (!posted) {
       downloadJson(payload);
       downloadCsv(payload);
+      showScreen('finish');
+      return;
     }
-    showScreen('finish');
+
+    showResultScreen(results);
+    showScreen('result');
+  }
+
+  function showResultScreen(results) {
+    const filtered = results.filter(r => r.trial_kind === 'stimulus');
+    const totalStimuli = Math.max(1, filtered.length);
+    const avg = filtered.reduce((sum, row) => sum + Number(row.score || 0), 0) / totalStimuli;
+    const detected = Math.round((avg / cfg.rating.max) * totalStimuli);
+    const sensitivity = Math.round((avg / cfg.rating.max) * 100);
+    const percentile = Math.max(1, Math.min(99, 100 - Math.round(sensitivity * 0.82)));
+
+    resultScore.textContent = `${detected}개 감지했습니다`;
+    resultRank.textContent = `착시 민감도 상위 ${percentile}%`;
+    resultCaption.textContent = '높게 응답한 이미지가 많을수록 움직임 착시에 민감하게 반응한 것으로 표시됩니다.';
+    resultMeterFill.style.width = `${Math.max(8, sensitivity)}%`;
   }
 
   function downloadJson(payload) {
@@ -401,6 +429,13 @@
     progressText.textContent = `${current} / ${total}`;
     const pct = total > 0 ? (current / total) * 100 : 0;
     progressFill.style.width = `${pct}%`;
+
+    if (!progressHint) return;
+    if (pct >= 100) progressHint.textContent = '완료. 결과를 계산하는 중입니다.';
+    else if (pct >= 75) progressHint.textContent = '거의 끝났습니다.';
+    else if (pct >= 50) progressHint.textContent = '절반을 넘었습니다.';
+    else if (pct >= 25) progressHint.textContent = '좋습니다. 계속 진행하세요.';
+    else progressHint.textContent = '첫 느낌으로 빠르게 선택하세요.';
   }
 
   function shuffle(arr) {
