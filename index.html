@@ -41,7 +41,24 @@
 
         <div class="actions">
           <button id="btn-fullscreen" class="secondary">전체화면</button>
-          <button id="btn-start">테스트 시작</button>
+          <button id="btn-start">설문 시작하기</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-intro" class="screen">
+      <div class="card wide video-card">
+        <div class="video-copy">
+          <p class="eyebrow">Before Test</p>
+          <h1>짧은 안내 영상을 먼저 확인하세요</h1>
+          <p class="muted">영상이 끝나면 실제 설문을 시작할 수 있습니다. 응답은 오래 고민하지 말고 첫 느낌으로 선택하면 됩니다.</p>
+        </div>
+        <video id="intro-video" class="intro-video" controls playsinline preload="auto">
+          <source src="stimuli/intro.mp4" type="video/mp4">
+        </video>
+        <div class="intro-confirm-panel">
+          <p id="intro-video-status" class="muted">영상을 끝까지 보면 시작 버튼이 활성화됩니다.</p>
+          <button id="btn-intro-confirm" disabled>영상을 봤고 이해했습니다</button>
         </div>
       </div>
     </section>
@@ -83,15 +100,78 @@
       </div>
     </section>
 
-    <section id="screen-result" class="screen">
-      <div class="card result-card">
-        <p class="eyebrow">Result</p>
-        <h1 id="result-score"></h1>
-        <h2 id="result-rank"></h2>
-        <p id="result-caption" class="muted"></p>
-        <div class="result-meter">
-          <div id="result-meter-fill"></div>
-        </div>
+    <section id="screen-result" class="screen result-screen">
+      <div class="result-sheet">
+        <header class="result-header">
+          <div>
+            <p class="eyebrow">Visual Response Report</p>
+            <h1>착시 반응 결과지</h1>
+            <p id="result-status" class="muted">응답 분석 중</p>
+          </div>
+          <div class="grade-card">
+            <span class="grade-label">종합 등급</span>
+            <strong id="result-grade">B+</strong>
+          </div>
+        </header>
+
+        <section class="result-grid">
+          <article class="panel hero-panel">
+            <p class="panel-label">전체 평균 점수</p>
+            <h2 id="result-score">-</h2>
+            <p id="result-rank" class="hero-rank">-</p>
+            <div class="result-meter">
+              <div id="result-meter-fill"></div>
+            </div>
+            <p id="result-caption" class="muted small-text"></p>
+          </article>
+
+          <article class="panel criteria-panel">
+            <p class="panel-label">3개 평가 기준</p>
+            <div class="metric-row">
+              <span>명도 대비 반응</span>
+              <strong id="metric-contrast-text">-</strong>
+              <div class="mini-bar"><div id="metric-contrast-fill"></div></div>
+            </div>
+            <div class="metric-row">
+              <span>색 배열 반응</span>
+              <strong id="metric-color-text">-</strong>
+              <div class="mini-bar"><div id="metric-color-fill"></div></div>
+            </div>
+            <div class="metric-row">
+              <span>공간 구조 반응</span>
+              <strong id="metric-structure-text">-</strong>
+              <div class="mini-bar"><div id="metric-structure-fill"></div></div>
+            </div>
+          </article>
+
+          <article class="panel trait-panel">
+            <p class="panel-label">응답자 특성 요약</p>
+            <div class="trait-grid">
+              <div><strong id="trait-main">-</strong><span>주 반응 유형</span></div>
+              <div><strong id="trait-speed">-</strong><span>응답 리듬</span></div>
+              <div><strong id="trait-stability">-</strong><span>반응 일관성</span></div>
+              <div><strong id="trait-focus">-</strong><span>몰입 지표</span></div>
+            </div>
+          </article>
+
+          <article class="panel histogram-panel">
+            <div class="panel-title-row">
+              <p class="panel-label">응답자 점수 분포</p>
+              <span id="distribution-label">평균권</span>
+            </div>
+            <div id="result-histogram" class="histogram"></div>
+            <div class="histogram-axis">
+              <span>D</span><span>C</span><span>B</span><span>B+</span><span>A</span><span>S</span>
+            </div>
+          </article>
+
+          <article class="panel recommendation-panel">
+            <p class="panel-label">결과 해석</p>
+            <h3 id="result-summary-title">-</h3>
+            <p id="result-summary" class="muted"></p>
+          </article>
+        </section>
+
         <div class="actions result-actions">
           <button id="btn-retry">다시 테스트</button>
         </div>
