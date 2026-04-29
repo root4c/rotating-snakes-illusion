@@ -81,6 +81,7 @@ const agreeIntroUnderstood = document.getElementById('agree-intro-understood');
   let currentShownAt = 0;
   let introReady = false;
   let introSceneIndex = 0;
+  let introDemoTimer = null;
 
 const introScenes = [
   {
@@ -199,6 +200,8 @@ function showIntroVideoScreen() {
 }
 
 function renderIntroScene() {
+  stopIntroDemoTimer();
+
   const scene = introScenes[introSceneIndex];
   if (!scene) return;
 
@@ -216,6 +219,13 @@ function renderIntroScene() {
     introSceneText.textContent = scene.text;
     introSceneImage.src = scene.image;
     introExtraLayer.innerHTML = buildIntroExtraLayer(scene.mode);
+    if (scene.mode === 'rating') {
+  startRatingDemo();
+}
+
+if (scene.mode === 'result') {
+  startResultDemo();
+}
 
     introDots.querySelectorAll('.intro-dot').forEach((dot, index) => {
       dot.classList.toggle('active', index === introSceneIndex);
@@ -245,7 +255,7 @@ function buildIntroExtraLayer(mode) {
         <span>1</span>
         <span>2</span>
         <span>3</span>
-        <span class="active">4</span>
+        <span>4</span>
         <span>5</span>
         <span>6</span>
         <span>7</span>
@@ -255,18 +265,20 @@ function buildIntroExtraLayer(mode) {
 
   if (mode === 'scan') {
     return `
-      <div class="intro-scan-guide"></div>
       <div class="intro-scan-path"></div>
+      <div class="intro-red-dot-orbit">
+        <div class="intro-red-dot"></div>
+      </div>
     `;
   }
 
   if (mode === 'result') {
     return `
       <div class="intro-result-mock">
-        <span>결과 예시</span>
-        <strong>B+</strong>
-        <small>착시 반응 결과지</small>
-        <div class="bar"><i></i></div>
+        <span id="intro-preview-label">결과 예시</span>
+        <strong id="intro-preview-grade">B+</strong>
+        <small id="intro-preview-rank">착시 민감도 상위 32%</small>
+        <div class="bar"><i id="intro-preview-bar"></i></div>
       </div>
     `;
   }
@@ -276,7 +288,91 @@ function buildIntroExtraLayer(mode) {
     <div class="intro-hud-ring ring-b"></div>
   `;
 }
+
+function stopIntroDemoTimer() {
+  if (introDemoTimer) {
+    clearTimeout(introDemoTimer);
+    introDemoTimer = null;
+  }
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function startRatingDemo() {
+  const buttons = Array.from(introExtraLayer.querySelectorAll('.intro-rating-mock span'));
+  if (!buttons.length) return;
+
+  let lastIndex = -1;
+
+  function pick() {
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    let nextIndex = randomInt(0, buttons.length - 1);
+    if (buttons.length > 1) {
+      while (nextIndex === lastIndex) {
+        nextIndex = randomInt(0, buttons.length - 1);
+      }
+    }
+
+    buttons[nextIndex].classList.add('active');
+    lastIndex = nextIndex;
+
+    introDemoTimer = setTimeout(pick, randomInt(2000, 3000));
+  }
+
+  pick();
+}
+
+function startResultDemo() {
+  const gradeEl = document.getElementById('intro-preview-grade');
+  const rankEl = document.getElementById('intro-preview-rank');
+  const barEl = document.getElementById('intro-preview-bar');
+
+  if (!gradeEl || !rankEl || !barEl) return;
+
+  const samples = [
+    { grade: 'C', rank: '착시 민감도 상위 68%', width: 34 },
+    { grade: 'B', rank: '착시 민감도 상위 45%', width: 52 },
+    { grade: 'B+', rank: '착시 민감도 상위 31%', width: 66 },
+    { grade: 'A', rank: '착시 민감도 상위 18%', width: 82 },
+    { grade: 'S', rank: '착시 민감도 상위 7%', width: 94 }
+  ];
+
+  let lastIndex = -1;
+
+  function pick() {
+    let nextIndex = randomInt(0, samples.length - 1);
+    if (samples.length > 1) {
+      while (nextIndex === lastIndex) {
+        nextIndex = randomInt(0, samples.length - 1);
+      }
+    }
+
+    const item = samples[nextIndex];
+
+    gradeEl.classList.remove('changing');
+    rankEl.classList.remove('changing');
+
+    requestAnimationFrame(() => {
+      gradeEl.classList.add('changing');
+      rankEl.classList.add('changing');
+
+      gradeEl.textContent = item.grade;
+      rankEl.textContent = item.rank;
+      barEl.style.width = `${item.width}%`;
+    });
+
+    lastIndex = nextIndex;
+    introDemoTimer = setTimeout(pick, randomInt(2000, 3000));
+  }
+
+  pick();
+}
   async function beginExperiment() {
+    stopIntroDemoTimer();
+    
     startedAt = new Date().toISOString();
     participantId = createParticipantId();
     results = [];
