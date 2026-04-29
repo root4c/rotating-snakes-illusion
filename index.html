@@ -46,22 +46,50 @@
       </div>
     </section>
 
-    <section id="screen-intro" class="screen">
-      <div class="card wide video-card">
-        <div class="video-copy">
-          <p class="eyebrow">Before Test</p>
-          <h1>짧은 안내 영상을 먼저 확인하세요</h1>
-          <p class="muted">영상이 끝나면 실제 설문을 시작할 수 있습니다. 응답은 오래 고민하지 말고 첫 느낌으로 선택하면 됩니다.</p>
-        </div>
-        <video id="intro-video" class="intro-video" controls playsinline preload="auto">
-          <source src="stimuli/intro.mp4" type="video/mp4">
-        </video>
-        <div class="intro-confirm-panel">
-          <p id="intro-video-status" class="muted">영상을 끝까지 보면 시작 버튼이 활성화됩니다.</p>
-          <button id="btn-intro-confirm" disabled>영상을 봤고 이해했습니다</button>
+<section id="screen-intro" class="screen">
+  <div class="card wide intro-flow-card">
+    <div class="intro-top">
+      <div id="intro-step-badge" class="intro-step-badge">안내 1 / 4</div>
+
+      <div id="intro-dots" class="intro-dots">
+        <span class="intro-dot active"></span>
+        <span class="intro-dot"></span>
+        <span class="intro-dot"></span>
+        <span class="intro-dot"></span>
+      </div>
+    </div>
+
+    <div class="intro-scene-wrap">
+      <div class="intro-scene-left">
+        <div class="intro-visual-frame">
+          <img id="intro-scene-image" src="stimuli/A4_B1_C1.jpg" alt="안내 이미지">
+          <div id="intro-extra-layer"></div>
         </div>
       </div>
-    </section>
+
+      <div id="intro-scene-copy" class="intro-scene-right">
+        <p id="intro-scene-kicker" class="eyebrow">Scene 1</p>
+        <h2 id="intro-scene-title">이 설문은 무엇을 하나요?</h2>
+        <p id="intro-scene-text" class="intro-scene-text">
+          정지된 착시 이미지가 얼마나 움직이는 것처럼 느껴지는지 평가하는 설문입니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="intro-bottom">
+      <label class="check-row hidden" id="intro-final-check-wrap">
+        <input type="checkbox" id="agree-intro-understood">
+        안내 내용을 확인했고, 응답 방식을 이해했습니다.
+      </label>
+
+      <div class="actions">
+        <button id="btn-intro-prev" class="secondary">이전</button>
+        <button id="btn-intro-next">확인했습니다</button>
+        <button id="btn-intro-confirm" class="hidden" disabled>설문 시작</button>
+      </div>
+    </div>
+  </div>
+</section>
 
     <section id="screen-trial" class="screen trial-screen">
       <div class="phase-wrap">
