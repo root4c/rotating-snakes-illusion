@@ -80,6 +80,38 @@ const agreeIntroUnderstood = document.getElementById('agree-intro-understood');
   let startedAt = null;
   let currentShownAt = 0;
   let introReady = false;
+  let introSceneIndex = 0;
+
+const introScenes = [
+  {
+    kicker: 'Scene 1',
+    title: '이 설문은 무엇을 하나요?',
+    text: '정지된 착시 이미지가 얼마나 움직이는 것처럼 느껴지는지 평가하는 설문입니다.',
+    image: cfg.introImage || 'stimuli/A4_B1_C1.jpg',
+    mode: 'illusion'
+  },
+  {
+    kicker: 'Scene 2',
+    title: '어떻게 응답하나요?',
+    text: '각 이미지를 보고 움직이는 것처럼 느껴진 정도를 1점부터 7점까지 선택합니다.',
+    image: 'stimuli/A1_B1_C4.jpg',
+    mode: 'rating'
+  },
+  {
+    kicker: 'Scene 3',
+    title: '이미지는 어떻게 봐야 하나요?',
+    text: '한 지점만 오래 응시하지 말고, 그림 전체를 천천히 훑어보듯이 봐주세요.',
+    image: 'stimuli/A4_B1_C1.jpg',
+    mode: 'scan'
+  },
+  {
+    kicker: 'Scene 4',
+    title: '응답할 때 주의할 점',
+    text: '정답은 없습니다. 너무 오래 고민하지 말고, 처음 느껴진 정도에 가깝게 응답하면 됩니다. 응답이 끝나면 간단한 결과 화면이 표시됩니다.',
+    image: 'stimuli/A4_B4_C4.jpg',
+    mode: 'result'
+  }
+];
 
   buildRatingButtons();
   renderIntro();
