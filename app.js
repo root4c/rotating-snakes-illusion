@@ -147,7 +147,7 @@ const introScenes = [
   btnRestart.addEventListener('click', () => window.location.reload());
   btnRetry?.addEventListener('click', () => window.location.reload());
 
- function setupIntroVideoGate() {
+function setupIntroVideoGate() {
   introReady = false;
 
   btnIntroPrev?.addEventListener('click', () => {
@@ -183,9 +183,22 @@ function showIntroVideoScreen() {
 
   if (btnIntroConfirm) {
     btnIntroConfirm.disabled = true;
+    btnIntroConfirm.classList.add('hidden');
   }
 
-  function renderIntroScene() {
+  if (btnIntroNext) {
+    btnIntroNext.classList.remove('hidden');
+  }
+
+  if (introFinalCheckWrap) {
+    introFinalCheckWrap.classList.add('hidden');
+  }
+
+  renderIntroScene();
+  showScreen('intro');
+}
+
+function renderIntroScene() {
   const scene = introScenes[introSceneIndex];
   if (!scene) return;
 
@@ -262,10 +275,6 @@ function buildIntroExtraLayer(mode) {
     <div class="intro-hud-ring ring-a"></div>
     <div class="intro-hud-ring ring-b"></div>
   `;
-}
-
-  renderIntroScene();
-  showScreen('intro');
 }
   async function beginExperiment() {
     startedAt = new Date().toISOString();
