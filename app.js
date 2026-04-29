@@ -185,6 +185,85 @@ function showIntroVideoScreen() {
     btnIntroConfirm.disabled = true;
   }
 
+  function renderIntroScene() {
+  const scene = introScenes[introSceneIndex];
+  if (!scene) return;
+
+  introSceneCopy?.classList.add('animating');
+
+  if (introSceneImage) {
+    introSceneImage.style.opacity = '0.35';
+    introSceneImage.style.transform = 'scale(0.96)';
+  }
+
+  setTimeout(() => {
+    introStepBadge.textContent = `안내 ${introSceneIndex + 1} / ${introScenes.length}`;
+    introSceneKicker.textContent = scene.kicker;
+    introSceneTitle.textContent = scene.title;
+    introSceneText.textContent = scene.text;
+    introSceneImage.src = scene.image;
+    introExtraLayer.innerHTML = buildIntroExtraLayer(scene.mode);
+
+    introDots.querySelectorAll('.intro-dot').forEach((dot, index) => {
+      dot.classList.toggle('active', index === introSceneIndex);
+    });
+
+    const isFirst = introSceneIndex === 0;
+    const isLast = introSceneIndex === introScenes.length - 1;
+
+    btnIntroPrev.disabled = isFirst;
+    btnIntroNext.classList.toggle('hidden', isLast);
+    btnIntroConfirm.classList.toggle('hidden', !isLast);
+    introFinalCheckWrap.classList.toggle('hidden', !isLast);
+
+    introSceneCopy?.classList.remove('animating');
+
+    if (introSceneImage) {
+      introSceneImage.style.opacity = '1';
+      introSceneImage.style.transform = 'scale(1)';
+    }
+  }, 160);
+}
+
+function buildIntroExtraLayer(mode) {
+  if (mode === 'rating') {
+    return `
+      <div class="intro-rating-mock">
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span class="active">4</span>
+        <span>5</span>
+        <span>6</span>
+        <span>7</span>
+      </div>
+    `;
+  }
+
+  if (mode === 'scan') {
+    return `
+      <div class="intro-scan-guide"></div>
+      <div class="intro-scan-path"></div>
+    `;
+  }
+
+  if (mode === 'result') {
+    return `
+      <div class="intro-result-mock">
+        <span>결과 예시</span>
+        <strong>B+</strong>
+        <small>착시 반응 결과지</small>
+        <div class="bar"><i></i></div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="intro-hud-ring ring-a"></div>
+    <div class="intro-hud-ring ring-b"></div>
+  `;
+}
+
   renderIntroScene();
   showScreen('intro');
 }
