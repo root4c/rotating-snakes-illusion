@@ -926,3 +926,96 @@ button:disabled {
 .intro-scene-wrap {
   min-height: 380px !important;
 }
+
+/* Scene 2: random rating highlight */
+.intro-rating-mock span {
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.intro-rating-mock span.active {
+  background: linear-gradient(135deg, var(--accent), #8b5cf6) !important;
+  border-color: rgba(255,255,255,0.62) !important;
+  box-shadow:
+    0 0 22px rgba(139, 92, 246, 0.72),
+    0 10px 26px rgba(0,0,0,0.28) !important;
+  transform: scale(1.12);
+}
+
+/* Scene 3: red gaze point orbit */
+.intro-red-dot-orbit {
+  position: absolute;
+  z-index: 6;
+  width: 230px;
+  height: 230px;
+  border-radius: 999px;
+  animation: introRedDotOrbit 3.2s linear infinite;
+  pointer-events: none;
+}
+
+.intro-red-dot {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #ff2b2b;
+  box-shadow:
+    0 0 0 5px rgba(255, 43, 43, 0.16),
+    0 0 18px rgba(255, 43, 43, 0.9);
+  transform: translate(-50%, -50%);
+}
+
+@keyframes introRedDotOrbit {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.intro-scan-path {
+  position: absolute;
+  z-index: 5;
+  width: 230px;
+  height: 230px;
+  border-radius: 999px;
+  border: 1px dashed rgba(255,255,255,0.35);
+  box-shadow: 0 0 18px rgba(91, 140, 255, 0.22);
+  pointer-events: none;
+}
+
+/* Scene 4: animated result preview */
+.intro-result-mock strong,
+.intro-result-mock small {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.intro-result-mock strong.changing,
+.intro-result-mock small.changing {
+  animation: resultTextPop 0.28s ease both;
+}
+
+@keyframes resultTextPop {
+  0% {
+    opacity: 0.35;
+    transform: translateY(6px) scale(0.96);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+#intro-preview-bar {
+  transition: width 0.55s cubic-bezier(.2,.8,.2,1);
+}
