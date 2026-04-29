@@ -263,14 +263,14 @@ function buildIntroExtraLayer(mode) {
     `;
   }
 
-  if (mode === 'scan') {
-    return `
-      <div class="intro-scan-path"></div>
-      <div class="intro-red-dot-orbit">
-        <div class="intro-red-dot"></div>
-      </div>
-    `;
-  }
+if (mode === 'scan') {
+  return `
+    <div class="intro-scan-path"></div>
+    <div class="intro-red-dot-orbit">
+      <div class="intro-red-dot"></div>
+    </div>
+  `;
+}
 
   if (mode === 'result') {
     return `
