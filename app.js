@@ -147,39 +147,47 @@ const introScenes = [
   btnRestart.addEventListener('click', () => window.location.reload());
   btnRetry?.addEventListener('click', () => window.location.reload());
 
-  function setupIntroVideoGate() {
-    if (!introVideo || !btnIntroConfirm) return;
+ function setupIntroVideoGate() {
+  introReady = false;
+
+  btnIntroPrev?.addEventListener('click', () => {
+    if (introSceneIndex <= 0) return;
+    introSceneIndex -= 1;
+    renderIntroScene();
+  });
+
+  btnIntroNext?.addEventListener('click', () => {
+    if (introSceneIndex >= introScenes.length - 1) return;
+    introSceneIndex += 1;
+    renderIntroScene();
+  });
+
+  agreeIntroUnderstood?.addEventListener('change', () => {
+    introReady = agreeIntroUnderstood.checked;
+    btnIntroConfirm.disabled = !introReady;
+  });
+}
+
+function unlockIntroConfirm() {
+  introReady = true;
+  btnIntroConfirm.disabled = false;
+}
+
+function showIntroVideoScreen() {
+  introSceneIndex = 0;
+  introReady = false;
+
+  if (agreeIntroUnderstood) {
+    agreeIntroUnderstood.checked = false;
+  }
+
+  if (btnIntroConfirm) {
     btnIntroConfirm.disabled = true;
-
-    introVideo.addEventListener('ended', unlockIntroConfirm);
-    introVideo.addEventListener('timeupdate', () => {
-      if (!introVideo.duration || Number.isNaN(introVideo.duration)) return;
-      const watchedRatio = introVideo.currentTime / introVideo.duration;
-      if (watchedRatio >= 0.85) unlockIntroConfirm();
-    });
-    introVideo.addEventListener('error', () => {
-      introVideoStatus.textContent = 'intro.mp4를 찾지 못했습니다. 안내 확인 후 바로 시작할 수 있습니다.';
-      unlockIntroConfirm();
-    });
   }
 
-  function unlockIntroConfirm() {
-    introReady = true;
-    btnIntroConfirm.disabled = false;
-    if (introVideoStatus) introVideoStatus.textContent = '확인 완료. 이제 설문을 시작할 수 있습니다.';
-  }
-
-  function showIntroVideoScreen() {
-    introReady = false;
-    if (btnIntroConfirm) btnIntroConfirm.disabled = true;
-    if (introVideoStatus) introVideoStatus.textContent = '영상을 끝까지 보면 시작 버튼이 활성화됩니다.';
-    if (introVideo) {
-      introVideo.currentTime = 0;
-      introVideo.load();
-    }
-    showScreen('intro');
-  }
-
+  renderIntroScene();
+  showScreen('intro');
+}
   async function beginExperiment() {
     startedAt = new Date().toISOString();
     participantId = createParticipantId();
