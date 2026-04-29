@@ -1019,3 +1019,54 @@ button:disabled {
 #intro-preview-bar {
   transition: width 0.55s cubic-bezier(.2,.8,.2,1);
 }
+
+/* Final override: Scene 3 red gaze dot */
+.intro-red-dot-orbit {
+  position: absolute !important;
+  z-index: 999 !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 230px !important;
+  height: 230px !important;
+  border-radius: 999px !important;
+  pointer-events: none !important;
+  animation: introRedDotOrbit 3.2s linear infinite !important;
+}
+
+.intro-red-dot {
+  position: absolute !important;
+  left: 50% !important;
+  top: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 999px !important;
+  background: #ff2b2b !important;
+  box-shadow:
+    0 0 0 6px rgba(255, 43, 43, 0.18),
+    0 0 18px rgba(255, 43, 43, 0.95) !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+@keyframes introRedDotOrbit {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.intro-scan-path {
+  position: absolute !important;
+  z-index: 998 !important;
+  left: 50% !important;
+  top: 50% !important;
+  width: 230px !important;
+  height: 230px !important;
+  border-radius: 999px !important;
+  border: 1px dashed rgba(255,255,255,0.38) !important;
+  box-shadow: 0 0 18px rgba(91, 140, 255, 0.22) !important;
+  transform: translate(-50%, -50%) !important;
+  pointer-events: none !important;
+}
