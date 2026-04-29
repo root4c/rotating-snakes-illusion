@@ -52,7 +52,7 @@ body { min-height: 100vh; overflow-x: hidden; }
   box-shadow: 0 18px 46px rgba(0,0,0,0.42);
   backdrop-filter: blur(10px);
 }
-.card.wide { width: min(920px, 100%); }
+.card.wide { (920px, 100%); }
 .start-card h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.05; margin-bottom: 12px; }
 .eyebrow {
   margin: 0 0 10px;
@@ -642,8 +642,8 @@ button:disabled {
 #intro-scene-image {
   position: relative;
   z-index: 2;
-  width: min(76%, 430px);
-  max-height: 400px;
+  width: min(52%, 280px);
+  max-height: 280px;
   object-fit: contain;
   border-radius: 999px;
   filter: drop-shadow(0 0 28px rgba(91, 140, 255, 0.5));
