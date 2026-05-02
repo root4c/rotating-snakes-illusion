@@ -1,5 +1,8 @@
 (function () {
   const cfg = window.EXPERIMENT_CONFIG;
+  (function () {
+  const cfg = window.EXPERIMENT_CONFIG;
+  const UI_VERSION = 'inline-rating-v2';
   if (!cfg) {
     alert('config.js를 찾을 수 없습니다.');
     return;
@@ -593,32 +596,34 @@ function showTrial() {
   }
   function submitRating(score) {
     const endedAt = new Date().toISOString();
-    results.push({
-      participant_id: assignment?.participant_id || participantId,
-      group_index: assignment?.group_index ?? null,
-      trial_index: trialIndex + 1,
-      trial_id: currentTrial.id,
-      trial_kind: currentTrial.kind,
-      score,
-      shown_at: new Date(currentShownAt).toISOString(),
-      answered_at: endedAt,
-      response_ms: Date.now() - currentShownAt
-    });
+results.push({
+  participant_id: assignment?.participant_id || participantId,
+  group_index: assignment?.group_index ?? null,
+  trial_index: trialIndex + 1,
+  trial_id: currentTrial.id,
+  trial_kind: currentTrial.kind,
+  score,
+  shown_at: new Date(currentShownAt).toISOString(),
+  answered_at: endedAt,
+  response_ms: Date.now() - currentShownAt,
+  ui_version: UI_VERSION
+});
     updateProgress(trialIndex + 1, trialOrder.length);
     nextTrial();
   }
 
   async function finishExperiment() {
     const payload = {
-      participant_id: assignment?.participant_id || participantId,
-      assignment_mode: assignment?.mode || 'unknown',
-      group_index: assignment?.group_index ?? null,
-      anchor_ids: (assignment?.anchors || cfg.anchorTrials || []).map(a => a.id),
-      started_at: startedAt,
-      submitted_at: new Date().toISOString(),
-      user_agent: navigator.userAgent,
-      results
-    };
+  participant_id: assignment?.participant_id || participantId,
+  assignment_mode: assignment?.mode || 'unknown',
+  group_index: assignment?.group_index ?? null,
+  anchor_ids: (assignment?.anchors || cfg.anchorTrials || []).map(a => a.id),
+  started_at: startedAt,
+  submitted_at: new Date().toISOString(),
+  user_agent: navigator.userAgent,
+  ui_version: UI_VERSION,
+  results
+};
 
     let posted = false;
     if (cfg.saving.autoPostEndpoint) {
@@ -758,22 +763,23 @@ function setRatingButtonsDisabled(disabled) {
   function downloadCsv(payload) {
     const data = payload || buildDownloadPayload();
     const header = [
-      'participant_id', 'group_index', 'trial_index', 'trial_id', 'trial_kind',
-      'score', 'shown_at', 'answered_at', 'response_ms'
-    ];
+  'participant_id', 'group_index', 'trial_index', 'trial_id', 'trial_kind',
+  'score', 'shown_at', 'answered_at', 'response_ms', 'ui_version'
+];
     const rows = [header.join(',')];
     for (const row of data.results) {
       rows.push([
-        csvEscape(row.participant_id),
-        csvEscape(row.group_index),
-        csvEscape(row.trial_index),
-        csvEscape(row.trial_id),
-        csvEscape(row.trial_kind),
-        csvEscape(row.score),
-        csvEscape(row.shown_at),
-        csvEscape(row.answered_at),
-        csvEscape(row.response_ms)
-      ].join(','));
+  csvEscape(row.participant_id),
+  csvEscape(row.group_index),
+  csvEscape(row.trial_index),
+  csvEscape(row.trial_id),
+  csvEscape(row.trial_kind),
+  csvEscape(row.score),
+  csvEscape(row.shown_at),
+  csvEscape(row.answered_at),
+  csvEscape(row.response_ms),
+  csvEscape(row.ui_version)
+].join(','));
     }
     downloadBlob(
       new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' }),
