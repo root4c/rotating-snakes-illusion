@@ -10,7 +10,6 @@
     start: document.getElementById('screen-start'),
     intro: document.getElementById('screen-intro'),
     trial: document.getElementById('screen-trial'),
-    rating: document.getElementById('screen-rating'),
     finish: document.getElementById('screen-finish'),
     result: document.getElementById('screen-result')
   };
