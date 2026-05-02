@@ -37,7 +37,6 @@ const introFinalCheckWrap = document.getElementById('intro-final-check-wrap');
 const agreeIntroUnderstood = document.getElementById('agree-intro-understood');
   const trialMessage = document.getElementById('trial-message');
   const stimulusImage = document.getElementById('stimulus-image');
-  const btnGoRating = document.getElementById('btn-go-rating');
   const trialCounter = document.getElementById('trial-counter');
   const ratingButtons = document.getElementById('rating-buttons');
   const saveStatus = document.getElementById('save-status');
@@ -136,13 +135,7 @@ const introScenes = [
     if (!introReady) return;
     beginExperiment();
   });
-
-  btnGoRating.addEventListener('click', () => {
-    const elapsed = Date.now() - currentShownAt;
-    if (elapsed < cfg.ui.minViewMs) return;
-    showRating();
-  });
-
+  
   btnDownloadJson.addEventListener('click', downloadJson);
   btnDownloadCsv.addEventListener('click', downloadCsv);
   btnRestart.addEventListener('click', () => window.location.reload());
@@ -558,25 +551,46 @@ function startResultDemo() {
       trialMessage.textContent = '움직이는 것처럼 보이는 정도를 첫 느낌으로 선택하세요.';
     }
 
-    btnGoRating.disabled = true;
-    stimulusImage.classList.remove('loaded');
-    stimulusImage.src = currentTrial.file;
-    stimulusImage.onload = () => {
-      currentShownAt = Date.now();
-      stimulusImage.classList.add('loaded');
-      setTimeout(() => { btnGoRating.disabled = false; }, cfg.ui.minViewMs);
-    };
+function showTrial() {
+  const total = trialOrder.length;
+  updateProgress(trialIndex, total);
+  trialCounter.textContent = `${trialIndex + 1} / ${total}`;
+
+  if (currentTrial.kind === 'anchor_low') {
+    trialMessage.textContent = '기준 이미지를 보고 빠르게 선택하세요.';
+  } else if (currentTrial.kind === 'anchor_high') {
+    trialMessage.textContent = '중간 체크포인트입니다. 거의 절반을 넘었습니다.';
+  } else {
+    trialMessage.textContent = '움직이는 것처럼 보이는 정도를 첫 느낌으로 선택하세요.';
+  }
+
+  setRatingButtonsDisabled(true);
+
+  stimulusImage.classList.remove('loaded');
+  stimulusImage.src = currentTrial.file;
+
+  stimulusImage.onload = () => {
+    currentShownAt = Date.now();
+    stimulusImage.classList.add('loaded');
+
+    setTimeout(() => {
+      setRatingButtonsDisabled(false);
+    }, cfg.ui.minViewMs);
+  };
+
+  stimulusImage.onerror = () => {
+    trialMessage.textContent = `이미지를 불러오지 못했습니다: ${currentTrial.file}`;
+    setRatingButtonsDisabled(false);
+  };
+
+  showScreen('trial');
+}
     stimulusImage.onerror = () => {
       trialMessage.textContent = `이미지를 불러오지 못했습니다: ${currentTrial.file}`;
       btnGoRating.disabled = false;
     };
     showScreen('trial');
   }
-
-  function showRating() {
-    showScreen('rating');
-  }
-
   function submitRating(score) {
     const endedAt = new Date().toISOString();
     results.push({
@@ -637,7 +651,11 @@ function startResultDemo() {
     showResultScreen(results);
     showScreen('result');
   }
-
+function setRatingButtonsDisabled(disabled) {
+  ratingButtons.querySelectorAll('button').forEach(btn => {
+    btn.disabled = disabled;
+  });
+}
   function showResultScreen(results) {
     const filtered = results.filter(r => r.trial_kind === 'stimulus');
     const totalStimuli = Math.max(1, filtered.length);
