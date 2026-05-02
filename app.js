@@ -1,7 +1,5 @@
 (function () {
   const cfg = window.EXPERIMENT_CONFIG;
-  (function () {
-  const cfg = window.EXPERIMENT_CONFIG;
   const UI_VERSION = 'inline-rating-v2';
   if (!cfg) {
     alert('config.js를 찾을 수 없습니다.');
@@ -541,19 +539,6 @@ function startResultDemo() {
     showTrial();
   }
 
-  function showTrial() {
-    const total = trialOrder.length;
-    updateProgress(trialIndex, total);
-    trialCounter.textContent = `${trialIndex + 1} / ${total}`;
-
-    if (currentTrial.kind === 'anchor_low') {
-      trialMessage.textContent = '기준 이미지를 보고 빠르게 선택하세요.';
-    } else if (currentTrial.kind === 'anchor_high') {
-      trialMessage.textContent = '중간 체크포인트입니다. 거의 절반을 넘었습니다.';
-    } else {
-      trialMessage.textContent = '움직이는 것처럼 보이는 정도를 첫 느낌으로 선택하세요.';
-    }
-
 function showTrial() {
   const total = trialOrder.length;
   updateProgress(trialIndex, total);
@@ -582,18 +567,13 @@ function showTrial() {
   };
 
   stimulusImage.onerror = () => {
+    currentShownAt = Date.now();
     trialMessage.textContent = `이미지를 불러오지 못했습니다: ${currentTrial.file}`;
     setRatingButtonsDisabled(false);
   };
 
   showScreen('trial');
 }
-    stimulusImage.onerror = () => {
-      trialMessage.textContent = `이미지를 불러오지 못했습니다: ${currentTrial.file}`;
-      btnGoRating.disabled = false;
-    };
-    showScreen('trial');
-  }
   function submitRating(score) {
     const endedAt = new Date().toISOString();
 results.push({
