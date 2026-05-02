@@ -766,18 +766,19 @@ function setRatingButtonsDisabled(disabled) {
     );
   }
 
-  function buildDownloadPayload() {
-    return {
-      participant_id: assignment?.participant_id || participantId,
-      assignment_mode: assignment?.mode || 'unknown',
-      group_index: assignment?.group_index ?? null,
-      anchor_ids: (assignment?.anchors || cfg.anchorTrials || []).map(a => a.id),
-      started_at: startedAt,
-      submitted_at: new Date().toISOString(),
-      user_agent: navigator.userAgent,
-      results
-    };
-  }
+function buildDownloadPayload() {
+  return {
+    participant_id: assignment?.participant_id || participantId,
+    assignment_mode: assignment?.mode || 'unknown',
+    group_index: assignment?.group_index ?? null,
+    anchor_ids: (assignment?.anchors || cfg.anchorTrials || []).map(a => a.id),
+    started_at: startedAt,
+    submitted_at: new Date().toISOString(),
+    user_agent: navigator.userAgent,
+    ui_version: UI_VERSION,
+    results
+  };
+}
 
   function csvEscape(v) {
     const s = String(v ?? '');
