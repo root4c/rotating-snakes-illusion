@@ -91,17 +91,28 @@
   </div>
 </section>
 
-    <section id="screen-trial" class="screen trial-screen">
-      <div class="phase-wrap">
-        <div id="trial-message" class="phase-message"></div>
-        <div id="stimulus-stage" class="stage">
-          <img id="stimulus-image" alt="stimulus">
-        </div>
-        <div class="actions centered-actions trial-actions">
-          <button id="btn-go-rating">평가하기</button>
-        </div>
+<section id="screen-trial" class="screen trial-screen">
+  <div class="phase-wrap">
+    <div id="stimulus-stage" class="stage">
+      <img id="stimulus-image" alt="stimulus">
+    </div>
+
+    <aside class="trial-side-panel">
+      <div class="trial-meta">
+        <span id="trial-counter"></span>
       </div>
-    </section>
+
+      <div id="trial-message" class="phase-message"></div>
+
+      <div class="inline-rating-box">
+        <h2>움직임 정도</h2>
+        <p class="muted small-guide">첫 느낌으로 선택하세요.</p>
+        <div id="rating-buttons" class="rating-buttons inline-rating-buttons"></div>
+        <p class="scale-caption">1 = 전혀 없음<br>7 = 매우 강함</p>
+      </div>
+    </aside>
+  </div>
+</section>
 
     <section id="screen-rating" class="screen">
       <div class="card rating-card">
