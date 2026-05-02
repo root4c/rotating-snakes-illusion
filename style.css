@@ -236,20 +236,6 @@ button:disabled {
   opacity: 1;
   transform: scale(1);
 }
-.trial-actions {
-  grid-column: 2;
-  grid-row: 1;
-  align-self: end;
-  justify-self: stretch;
-  margin: 0;
-  padding-bottom: 12px;
-}
-#btn-go-rating {
-  width: 100%;
-  min-width: 0;
-  font-size: 17px;
-  padding: 16px 18px;
-}
 .red-dot {
   position: absolute;
   width: 14px;
@@ -1069,4 +1055,73 @@ button:disabled {
   box-shadow: 0 0 18px rgba(91, 140, 255, 0.22) !important;
   transform: translate(-50%, -50%) !important;
   pointer-events: none !important;
+}
+
+.trial-side-panel {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.trial-side-panel .trial-meta {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(23, 26, 33, 0.9);
+  color: var(--muted);
+  font-weight: 900;
+  text-align: center;
+}
+
+.trial-side-panel .phase-message {
+  grid-column: auto;
+  grid-row: auto;
+  align-self: auto;
+  min-height: auto;
+  margin-top: 0;
+  padding: 14px 12px;
+  font-size: 14px;
+}
+
+.inline-rating-box {
+  padding: 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(23, 26, 33, 0.92);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.28);
+}
+
+.inline-rating-box h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.small-guide {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.inline-rating-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 0;
+}
+
+.inline-rating-buttons .rating-btn {
+  padding: 12px 0;
+  font-size: 18px;
+  border-radius: 12px;
+}
+
+.inline-rating-box .scale-caption {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.45;
 }
